@@ -5,70 +5,59 @@
 import express from "express";
 import cors from "cors";
 
-// Routes
+// Import routes
 import routes from "./routes/index.js";
 
-// Error handlers
+// Import error handlers
 import {
   errorHandler,
   notFoundHandler,
 } from "./middleware/error.middleware.js";
 
+// Create Express app
 const app = express();
 
 // ============================================
-// CORS
+// CORS CONFIGURATION
 // ============================================
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow Postman, Render health checks
+      // Allow Postman, Render health checks, browser direct access
       if (!origin) {
         return callback(null, true);
       }
 
-      // Local frontend
+      // Allow localhost
       if (origin === "http://localhost:5173") {
         return callback(null, true);
       }
 
-      // Allow every Vercel deployment
+      // Allow all Vercel deployments
       if (origin.endsWith(".vercel.app")) {
         return callback(null, true);
       }
 
       console.log("Blocked Origin:", origin);
-      callback(new Error("CORS Not Allowed"));
+      return callback(new Error("Not allowed by CORS"));
     },
 
     credentials: true,
-
-    methods: [
-      "GET",
-      "POST",
-      "PUT",
-      "PATCH",
-      "DELETE",
-      "OPTIONS",
-    ],
-
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-    ],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
 // ============================================
-// Middleware
+// MIDDLEWARE
 // ============================================
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // ============================================
-// Health Check
+// TEST ROUTES
 // ============================================
 
 app.get("/", (req, res) => {
@@ -86,25 +75,25 @@ app.get("/api", (req, res) => {
 });
 
 // ============================================
-// API Routes
+// API ROUTES
 // ============================================
 
 app.use("/api", routes);
 
 // ============================================
-// 404
+// 404 HANDLER
 // ============================================
 
 app.use(notFoundHandler);
 
 // ============================================
-// Error Handler
+// GLOBAL ERROR HANDLER
 // ============================================
 
 app.use(errorHandler);
 
 // ============================================
-// Export
+// EXPORT
 // ============================================
 
 export default app;
