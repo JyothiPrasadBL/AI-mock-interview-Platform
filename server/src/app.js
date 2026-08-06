@@ -14,10 +14,11 @@ import {
   notFoundHandler,
 } from "./middleware/error.middleware.js";
 
+// Create Express app
 const app = express();
 
 // ============================================
-// CORS
+// CORS CONFIGURATION
 // ============================================
 
 const allowedOrigins = [
@@ -28,13 +29,14 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (Postman, browser direct access)
+      // Allow Postman, Render health checks, browser direct access
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
+      console.log("Blocked Origin:", origin);
       return callback(new Error("CORS Not Allowed"));
     },
     credentials: true,
@@ -43,42 +45,51 @@ app.use(
   })
 );
 
-// Handle preflight requests
-app.options("*", cors());
+// ============================================
+// MIDDLEWARE
+// ============================================
 
-// Parse JSON
 app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
 // ============================================
 // TEST ROUTES
 // ============================================
 
 app.get("/", (req, res) => {
-  res.json({
+  res.status(200).json({
     success: true,
-    message: "Backend is running",
+    message: "Backend is running successfully 🚀",
   });
 });
 
 app.get("/api", (req, res) => {
-  res.json({
+  res.status(200).json({
     success: true,
-    message: "API is working",
+    message: "API is working 🚀",
   });
 });
 
 // ============================================
-// MAIN ROUTES
+// API ROUTES
 // ============================================
 
 app.use("/api", routes);
 
 // ============================================
-// ERROR HANDLERS
+// 404 HANDLER
 // ============================================
 
 app.use(notFoundHandler);
 
+// ============================================
+// GLOBAL ERROR HANDLER
+// ============================================
+
 app.use(errorHandler);
+
+// ============================================
+// EXPORT
+// ============================================
 
 export default app;
