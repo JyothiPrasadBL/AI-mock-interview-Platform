@@ -5,61 +5,76 @@
 import express from "express";
 import cors from "cors";
 
-// Import routes
+// Routes
 import routes from "./routes/index.js";
 
-// Import error handlers
+// Error handlers
 import {
   errorHandler,
   notFoundHandler,
 } from "./middleware/error.middleware.js";
 
-// Create Express app
 const app = express();
 
 // ============================================
-// CORS CONFIGURATION
+// CORS
 // ============================================
-
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://ai-mock-interview-platform-blond.vercel.app",
-];
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow Postman, Render health checks, browser direct access
-      if (!origin) return callback(null, true);
+    origin: (origin, callback) => {
+      // Allow Postman, Render health checks
+      if (!origin) {
+        return callback(null, true);
+      }
 
-      if (allowedOrigins.includes(origin)) {
+      // Local frontend
+      if (origin === "http://localhost:5173") {
+        return callback(null, true);
+      }
+
+      // Allow every Vercel deployment
+      if (origin.endsWith(".vercel.app")) {
         return callback(null, true);
       }
 
       console.log("Blocked Origin:", origin);
-      return callback(new Error("CORS Not Allowed"));
+      callback(new Error("CORS Not Allowed"));
     },
+
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
   })
 );
 
 // ============================================
-// MIDDLEWARE
+// Middleware
 // ============================================
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // ============================================
-// TEST ROUTES
+// Health Check
 // ============================================
 
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "Backend is running successfully 🚀",
+    message: "Backend running successfully 🚀",
   });
 });
 
@@ -71,25 +86,25 @@ app.get("/api", (req, res) => {
 });
 
 // ============================================
-// API ROUTES
+// API Routes
 // ============================================
 
 app.use("/api", routes);
 
 // ============================================
-// 404 HANDLER
+// 404
 // ============================================
 
 app.use(notFoundHandler);
 
 // ============================================
-// GLOBAL ERROR HANDLER
+// Error Handler
 // ============================================
 
 app.use(errorHandler);
 
 // ============================================
-// EXPORT
+// Export
 // ============================================
 
 export default app;
